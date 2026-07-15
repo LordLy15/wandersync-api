@@ -1,13 +1,22 @@
-FROM php:8.3-alpine
+FROM php:8.3-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
     postgresql-dev \
+    postgresql-client \
     linux-headers \
-    $PHPIZE_DEPS
+    $PHPIZE_DEPS \
+    autoconf \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    zip \
+    unzip
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql pgsql
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+    pdo pdo_pgsql pgsql gd zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
