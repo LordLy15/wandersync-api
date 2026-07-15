@@ -18,10 +18,16 @@ WORKDIR /var/www/html
 # Copy application
 COPY . .
 
+# Create .env if not exists
+RUN if [ ! -f .env ]; then cp .env.example .env; fi
+
+# Generate APP_KEY
+RUN php artisan key:generate --force
+
 # Install dependencies without running scripts
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-# Run package discovery manually
+# Run package discovery
 RUN php artisan package:discover --ansi
 
 # Set permissions
