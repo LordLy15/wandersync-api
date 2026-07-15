@@ -20,5 +20,5 @@ fi
 # Run migrations
 php artisan migrate --force || echo "Migration skipped (may have already run)"
 
-# Start server with explicit port
-exec php -S 0.0.0.0:${PORT} -t public
+# Start server with router.php for proper Laravel routing
+exec php -S 0.0.0.0:${PORT} router.php

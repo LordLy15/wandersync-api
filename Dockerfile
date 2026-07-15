@@ -56,6 +56,9 @@ WORKDIR /var/www/html
 # Make start script executable
 RUN chmod +x start.sh
 
+# Make router executable
+RUN chmod +x router.php
+
 # Expose port
 EXPOSE 8080
 
