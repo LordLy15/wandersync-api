@@ -16,11 +16,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application
+# Copy only essential files first
+COPY composer.json composer.lock ./
+
+# Install dependencies without scripts
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts --no-autoloader
+
+# Copy application code
 COPY . .
 
-# Create .env file with Railway environment variables
-RUN echo "APP_NAME=${APP_NAME:-Laravel}" > .env && \
+# Create .env file
+RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
     echo "APP_KEY=${APP_KEY}" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
@@ -36,11 +42,8 @@ RUN echo "APP_NAME=${APP_NAME:-Laravel}" > .env && \
 # Create storage directories
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
 
-# Install dependencies without running scripts
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
-
-# Run package discovery
-RUN php artisan package:discover --ansi
+# Generate autoloader
+RUN composer dump-autoload --optimize --no-dev
 
 # Expose port
 EXPOSE 8080
