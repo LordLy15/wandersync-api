@@ -32,11 +32,8 @@ RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions sto
 # Generate autoloader
 RUN composer dump-autoload --optimize --no-dev
 
-# Fix Laravel ServeCommand.php for PHP 8.4 (string + int issue)
-RUN sed -i 's/return \$port + \$this->portOffset;/return (int) \$port + \$this->portOffset;/' vendor/laravel/framework/src/Illuminate/Foundation/Console/ServeCommand.php
-
 # ============================================
-# Final stage - minimal image
+# Final stage
 # ============================================
 FROM php:8.4-cli
 
@@ -53,14 +50,8 @@ COPY --from=builder /var/www/html /var/www/html
 
 WORKDIR /var/www/html
 
-# Make start script executable
-RUN chmod +x start.sh
-
-# Make router executable
-RUN chmod +x router.php
-
 # Expose port
 EXPOSE 8080
 
-# Start command
-CMD ["./start.sh"]
+# Start command - directly use PHP built-in server
+CMD ["php", "-S", "0.0.0.0:8080", "router.php"]
