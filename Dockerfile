@@ -1,4 +1,4 @@
-FROM php:8.4-cli
+FROM php:8.4-cli AS builder
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,31 +19,42 @@ WORKDIR /var/www/html
 # Copy only essential files first
 COPY composer.json composer.lock ./
 
-# Install dependencies without scripts
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy application code
 COPY . .
 
-# Create .env file (only non-sensitive defaults, secrets come from Railway env vars)
-RUN echo "APP_NAME=Laravel" > .env && \
-    echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=" >> .env && \
-    echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=https://wandersync-api.up.railway.app" >> .env && \
-    echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "SESSION_DRIVER=database" >> .env && \
-    echo "QUEUE_CONNECTION=database" >> .env && \
-    echo "CACHE_STORE=database"
-
 # Create storage directories
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
 # Generate autoloader
 RUN composer dump-autoload --optimize --no-dev
 
+# ============================================
+# Final stage - minimal image
+# ============================================
+FROM php:8.4-cli
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install only runtime PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql pgsql
+
+# Copy application from builder
+COPY --from=builder /var/www/html /var/www/html
+
+WORKDIR /var/www/html
+
+# Make start script executable
+RUN chmod +x start.sh
+
 # Expose port
 EXPOSE 8080
 
-# Start command - generate APP_KEY if not set
-CMD ["sh", "-c", "php artisan key:generate --force && php artisan serve --host=0.0.0.0 --port=8080"]
+# Start command
+CMD ["./start.sh"]
