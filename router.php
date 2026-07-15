@@ -1,18 +1,26 @@
 <?php
 
-/**
- * Laravel Router for PHP Built-in Server
- *
- * Place this file in the project root and use:
- * php -S 0.0.0.0:8080 router.php
- */
+// Laravel Router for PHP Built-in Server
 
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
-// Serve static files directly
-if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
-    return false;
+// Root path
+if ($uri === '/') {
+    require __DIR__.'/public/index.php';
+    return;
 }
 
-// Serve index.php for all other requests
+// API routes
+if (strpos($uri, '/api/') === 0) {
+    require __DIR__.'/public/index.php';
+    return;
+}
+
+// Serve static files if they exist
+$file = __DIR__.'/public'.$uri;
+if (is_file($file)) {
+    return false; // Let PHP built-in server handle static files
+}
+
+// Default to Laravel index.php
 require __DIR__.'/public/index.php';
