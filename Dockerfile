@@ -1,22 +1,14 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.3-cli
 
 # Install system dependencies
-RUN apk add --no-cache \
-    postgresql-dev \
-    postgresql-client \
-    linux-headers \
-    $PHPIZE_DEPS \
-    autoconf \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    zip \
-    unzip
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    libzip-dev \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
-    pdo pdo_pgsql pgsql gd zip
+RUN docker-php-ext-install pdo pdo_pgsql pgsql zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -49,9 +41,6 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-
 
 # Run package discovery
 RUN php artisan package:discover --ansi
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Expose port
 EXPOSE 8080
