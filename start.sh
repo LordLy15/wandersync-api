@@ -1,8 +1,14 @@
 #!/bin/bash
 set -e
 
-# Fix PORT type issue - Railway passes PORT as string, PHP 8.4 needs int
-export PORT=${PORT:-8080}
+# Railway sets PORT env var - use it, default to 8080
+PORT=${PORT:-8080}
+# Ensure PORT is numeric and not 0
+if [ -z "$PORT" ] || [ "$PORT" = "0" ]; then
+    PORT=8080
+fi
+
+echo "Starting on port $PORT"
 
 # If APP_KEY is not set, generate one
 if [ -z "$APP_KEY" ]; then
@@ -21,4 +27,4 @@ fi
 php artisan migrate --force || echo "Migration skipped (may have already run)"
 
 # Start server with router.php for proper Laravel routing
-exec php -S 0.0.0.0:${PORT} router.php
+exec php -S 0.0.0.0:$PORT router.php
