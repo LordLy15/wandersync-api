@@ -18,11 +18,22 @@ WORKDIR /var/www/html
 # Copy application
 COPY . .
 
-# Create .env if not exists
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Create .env file with Railway environment variables
+RUN echo "APP_NAME=${APP_NAME:-Laravel}" > .env && \
+    echo "APP_ENV=production" >> .env && \
+    echo "APP_KEY=${APP_KEY}" >> .env && \
+    echo "APP_DEBUG=false" >> .env && \
+    echo "APP_URL=${APP_URL:-https://wandersync-api.up.railway.app}" >> .env && \
+    echo "DB_CONNECTION=pgsql" >> .env && \
+    echo "DB_HOST=${DB_HOST}" >> .env && \
+    echo "DB_PORT=${DB_PORT}" >> .env && \
+    echo "DB_DATABASE=${DB_DATABASE}" >> .env && \
+    echo "DB_USERNAME=${DB_USERNAME}" >> .env && \
+    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env && \
+    echo "DB_SSLMODE=require" >> .env
 
-# Generate APP_KEY
-RUN php artisan key:generate --force
+# Create storage directories
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
 
 # Install dependencies without running scripts
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
