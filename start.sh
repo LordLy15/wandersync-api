@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Fix PORT type issue - Railway passes PORT as string, PHP 8.4 needs int
+export PORT=${PORT:-8080}
+
 # If APP_KEY is not set, generate one
 if [ -z "$APP_KEY" ]; then
     echo "APP_KEY not set, generating..."
@@ -17,5 +20,5 @@ fi
 # Run migrations
 php artisan migrate --force || echo "Migration skipped (may have already run)"
 
-# Start server
-exec php -S 0.0.0.0:8080 -t public
+# Start server with explicit port
+exec php -S 0.0.0.0:${PORT} -t public

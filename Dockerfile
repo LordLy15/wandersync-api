@@ -32,6 +32,9 @@ RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions sto
 # Generate autoloader
 RUN composer dump-autoload --optimize --no-dev
 
+# Fix Laravel ServeCommand.php for PHP 8.4 (string + int issue)
+RUN sed -i 's/return \$port + \$this->portOffset;/return (int) \$port + \$this->portOffset;/' vendor/laravel/framework/src/Illuminate/Foundation/Console/ServeCommand.php
+
 # ============================================
 # Final stage - minimal image
 # ============================================
