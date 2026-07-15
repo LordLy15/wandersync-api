@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.4-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -20,24 +20,21 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Install dependencies without scripts
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts --no-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy application code
 COPY . .
 
-# Create .env file
+# Create .env file (only non-sensitive defaults, secrets come from Railway env vars)
 RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=${APP_KEY}" >> .env && \
+    echo "APP_KEY=" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=${APP_URL:-https://wandersync-api.up.railway.app}" >> .env && \
+    echo "APP_URL=https://wandersync-api.up.railway.app" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "DB_HOST=${DB_HOST}" >> .env && \
-    echo "DB_PORT=${DB_PORT}" >> .env && \
-    echo "DB_DATABASE=${DB_DATABASE}" >> .env && \
-    echo "DB_USERNAME=${DB_USERNAME}" >> .env && \
-    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env && \
-    echo "DB_SSLMODE=require" >> .env
+    echo "SESSION_DRIVER=database" >> .env && \
+    echo "QUEUE_CONNECTION=database" >> .env && \
+    echo "CACHE_STORE=database"
 
 # Create storage directories
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
@@ -48,5 +45,5 @@ RUN composer dump-autoload --optimize --no-dev
 # Expose port
 EXPOSE 8080
 
-# Start command
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+# Start command - generate APP_KEY if not set
+CMD ["sh", "-c", "php artisan key:generate --force && php artisan serve --host=0.0.0.0 --port=8080"]
