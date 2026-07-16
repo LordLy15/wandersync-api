@@ -1,5 +1,0 @@
-[phases.setup]
-cmds = []
-
-[nixpacks]
-php_version = "8.4"
