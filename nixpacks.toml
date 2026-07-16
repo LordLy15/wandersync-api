@@ -1,7 +1,8 @@
-# Nixpacks configuration for WanderSync API
-# Override Nixpacks default PHP artisan serve behavior
+[nixpacks]
+php_version = "8.3"
 
-variables = { }
+[phases.setup]
+nixpkgs_archive = "stage3"
 
-[start]
-command = "php -S 0.0.0.0:${PORT:-8080} -t public router.php"
+[phases.build]
+cmds = ["composer install --ignore-platform-reqs --no-scripts"]
