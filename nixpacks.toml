@@ -1,8 +1,0 @@
-[nixpacks]
-php_version = "8.4"
-
-[phases.setup]
-nixpkgs_archive = "stage3"
-
-[phases.build]
-cmds = ["composer install --ignore-platform-reqs --no-scripts"]
