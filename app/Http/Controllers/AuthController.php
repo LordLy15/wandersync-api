@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\Sanctum;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
@@ -24,7 +25,7 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        $token = Auth::guard('api')->login($user);
+        $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -43,20 +44,21 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $token = Auth::guard('api')->attempt($credentials);
-
-        if (!$token) {
+        if (!Auth::attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
             ], 401);
         }
 
+        $user = Auth::user();
+        $token = $user->createToken('auth-token')->plainTextToken;
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
             'data' => [
-                'user' => Auth::guard('api')->user(),
+                'user' => $user,
                 'token' => $token,
             ],
         ]);
@@ -80,7 +82,7 @@ class AuthController extends Controller
             ]
         );
 
-        $token = Auth::guard('api')->login($user);
+        $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -92,9 +94,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        Auth::guard('api')->logout();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'success' => true,
@@ -102,11 +104,11 @@ class AuthController extends Controller
         ]);
     }
 
-    public function user()
+    public function user(Request $request)
     {
         return response()->json([
             'success' => true,
-            'data' => Auth::guard('api')->user(),
+            'data' => $request->user(),
         ]);
     }
 }
